@@ -12,15 +12,7 @@ float maxHSize=initH/3.0;
 float alpha=0.0;
 float framerate = 60;
 
-//イージングアニメーション
-float initValue=-100;  //初期値
-float value=initValue;  //現フレームの値
-float valueInChange=200; //最終的な変化量
-float duration = 1.0; //初期値から最終的な値まで変化する時間(s)
-float elapsedTime=0.0; //現フレームまでにすぎた時間(ms)
-float elapsedTimeRate=0.0; //現フレームまでにすぎた時間(ms)
-
-//
+Object a;
 
 void settings(){
   size(initW, initH);
@@ -28,7 +20,7 @@ void settings(){
 }
 void setup() {
   surface.setResizable(true);
-  
+  a = new Object(-100, 200, 1.0);
   frameRate(framerate);
   //受信用のオブジェクト。ポート番号12000で受ける。
   oscP5 = new OscP5(this,12000);
@@ -39,9 +31,8 @@ void setup() {
 }
 
 void update(){
-   elapsedTime += 1/framerate;
      
-   easingAnimation();
+   a.easing();
    maxWSize=width/3.0;
    maxHSize=height/3.0;
 }
@@ -63,14 +54,14 @@ public void drawText(int noteNum) {// int noteNumにデータの値を受ける
 void draw() {
   update();
   pushMatrix();
-  fill(0, 250);
+  fill(0, 100);
   rect(0,0,width, height);
   popMatrix();
   //background(0,0);
   textSize(50);
   textAlign(CENTER);//中心揃え
   pushMatrix();
-  translate(value, 0);
+  translate(a.value, 0);
   fill(255);
   rect(width/2-maxWSize*size/2.0, height/2-maxHSize*size/2.0, maxWSize*size, maxHSize*size);
   popMatrix();
@@ -87,34 +78,42 @@ void keyPressed() {
     }
   }
   if(key == 'a'){
-     initEase();
+     a.init();
      background(255);
   }      
 }
-
-void initEase(){
-  value = initValue;
-  elapsedTime = 0;
-}
-
-// ノーマル(not EASING)
-void linerAnimation(){
-  if(elapsedTime<duration){
-    elapsedTimeRate=elapsedTime/duration;
-    value = initValue + (valueInChange-initValue) * elapsedTimeRate;
-    println(elapsedTime);
-  }else{
-    value = valueInChange;
+class Object{
+  float initValue, value, valueInChange, duration, elapsedTime, elapsedTimeRate;
+  Object(float _initValue, float _valueInChange, float _duration){
+    initValue = _initValue;
+    valueInChange = _valueInChange;
+    duration = _duration;
+    init();
   }
-}
-
-void easingAnimation(){
+  void easing(){
+    elapsedTime += 1/framerate;
+    if(elapsedTime<duration){
+      elapsedTimeRate=elapsedTime/duration;
+      float valueChangeRate = 1-(float)Math.pow(elapsedTimeRate-1, 2);
+      value = initValue + (valueInChange-initValue) * valueChangeRate;
+      println(elapsedTime);
+    }else{
+      value = valueInChange;
+    }
+  }
+  void liner(){
+    
   if(elapsedTime<duration){
-    elapsedTimeRate=elapsedTime/duration;
-    float valueChangeRate = 1-(float)Math.pow(elapsedTimeRate-1, 2);
-    value = initValue + (valueInChange-initValue) * valueChangeRate;
-    println(elapsedTime);
-  }else{
-    value = valueInChange;
+      elapsedTimeRate=elapsedTime/duration;
+      value = initValue + (valueInChange-initValue) * elapsedTimeRate;
+      println(elapsedTime);
+    }else{
+      value = valueInChange;
+    }
+  }
+  void init(){
+    value = initValue;
+    elapsedTime = 0.0;
+    elapsedTimeRate = 0.0;
   }
 }
